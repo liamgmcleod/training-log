@@ -147,7 +147,7 @@ summary .s-title{font-weight:600}
 .weeks .w i{display:block;width:100%;background:var(--accent);border-radius:4px 4px 0 0;min-height:2px}
 
 /* setup */
-.ex-edit{display:grid;grid-template-columns:1fr 70px 64px;gap:6px;padding:10px 0;border-bottom:1px solid var(--line)}
+.ex-edit{display:grid;grid-template-columns:1fr 64px;gap:6px;padding:10px 0;border-bottom:1px solid var(--line)}
 .ex-edit .nm{grid-column:1/-1}
 .ex-edit .opts{grid-column:1/-1;display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:13px}
 .ex-edit .opts select{width:auto}
@@ -276,18 +276,11 @@ function lastFor(name){
 
 function suggest(x){
   const last = lastFor(x.name);
-  if (!last) return {w: x.start, text: "Starting weight. Aim for 3 × 12.", up: false};
+  if (!last) return {w: x.start, text: "Starting weight."};
   const sets = last.entry.sets;
   const top = Math.max(...sets.map(s => Number(s.w) || 0));
   const reps = sets.map(s => s.r || 0);
-  const hit = sets.length >= 3 && sets.every(s => Number(s.r) >= 12 && Number(s.w) === top);
-  const lastTxt = `Last time ${kg(top)}kg · ${reps.join("/")}.`;
-  if (hit){
-    const next = Math.max(0, Math.round((x.assisted ? top - x.inc : top + x.inc) * 100) / 100);
-    const verb = x.assisted ? "less assistance" : "up a step";
-    return {w: next, text: `${lastTxt} <span class="up">All 12s, so ${verb}: ${kg(next)}kg.</span>`, up: true};
-  }
-  return {w: top, text: `${lastTxt} Stay at <b>${kg(top)}kg</b> until you hit 12 on every set.`, up: false};
+  return {w: top, text: `Last time <b>${kg(top)}kg</b> · ${reps.join("/")}.`};
 }
 
 function entryFor(x, extra){
@@ -466,7 +459,6 @@ function renderSetup(){
         ${t.exercises.map((x, i) => `<div class="ex-edit">
           <div class="nm"><span class="mini">Exercise</span><input type="text" data-ed="name" data-day="${k}" data-i="${i}" value="${esc(x.name)}"></div>
           <div><span class="mini">Start kg</span><input type="number" inputmode="decimal" data-ed="start" data-day="${k}" data-i="${i}" value="${kg(x.start)}"></div>
-          <div><span class="mini">Step kg</span><input type="number" inputmode="decimal" data-ed="inc" data-day="${k}" data-i="${i}" value="${kg(x.inc)}"></div>
           <div><span class="mini">&nbsp;</span><button class="x" style="width:100%" data-act="ex-del" data-day="${k}" data-i="${i}" data-confirm="Sure?" aria-label="Remove ${esc(x.name)}">✕</button></div>
           <div class="opts">
             <select data-ed="side" data-day="${k}" data-i="${i}" aria-label="Sides">
@@ -483,7 +475,7 @@ function renderSetup(){
   }).join("");
   $("#view").innerHTML = `<div class="stack">
     <span class="label">Lifting days</span>
-    <p class="small muted" style="margin:0">Step is how much the app adds once you hit 12 reps on all three sets. Match it to the next weight on each machine or the next dumbbell up.</p>
+    <p class="small muted" style="margin:0">Start kg is only used the first time you log an exercise. After that, each set pre-fills with your top weight from last session, and you change it yourself when you want to go up.</p>
     ${days}
     <span class="label">Backup</span>
     <div class="panel form">
