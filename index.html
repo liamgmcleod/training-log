@@ -292,6 +292,9 @@ function exFor(t, e){
 }
 
 function getDraft(day){
+  const old = S.drafts[day];
+  // A draft from an earlier day with nothing ticked and no date picked by hand is stale: start fresh for today.
+  if (old && old.date !== today() && !old.dateSet && !old.entries.some(e => e.sets.some(s => s.done))) delete S.drafts[day];
   if (!S.drafts[day]){
     S.drafts[day] = {date: today(), entries: S.templates[day].exercises.map(x => entryFor(x))};
     save();
@@ -595,7 +598,7 @@ document.addEventListener("input", e => {
   const el = e.target;
   if (el.dataset.in){
     const d = getDraft(UI.mode);
-    if (el.dataset.in === "date") d.date = el.value;
+    if (el.dataset.in === "date"){ d.date = el.value; d.dateSet = true; }
     else d.entries[+el.dataset.i].sets[+el.dataset.j][el.dataset.in] = el.value.replace(",", ".");
     save(); return;
   }
@@ -621,6 +624,15 @@ function importData(txt){
     S = d; if (!S.drafts) S.drafts = {}; save(true); UI.mode = null; render(); toast(`Imported ${S.sessions.length} sessions`);
   } catch(err){ toast("That doesn't look like a Training Log backup"); }
 }
+
+// Home-screen apps can sit in the background for days; refresh dates when it comes back, unless you're mid-typing.
+let lastDay = today();
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState !== "visible" || today() === lastDay) return;
+  lastDay = today();
+  const a = document.activeElement;
+  if (!(a && a.matches("input, textarea, select"))) render();
+});
 
 load();
 render();
